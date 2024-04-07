@@ -17,7 +17,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -30,13 +29,13 @@ public class PrimaryController {
     private TextField nameTextField;
 
     @FXML
+    private TextField phoneNumTextField;
+
+    @FXML
     private TextArea outputTextArea;
 
     @FXML
     private Button readButton;
-
-    @FXML
-    private Button registerButton;
 
     @FXML
     private Button switchSecondaryViewButton;
@@ -64,13 +63,6 @@ public class PrimaryController {
     void readButtonClicked(ActionEvent event) {
         readFirebase();
     }
-
-    @FXML
-    void registerButtonClicked(ActionEvent event) {
-        registerUser();
-    }
-
-
     @FXML
     void writeButtonClicked(ActionEvent event) {
         addData();
@@ -80,7 +72,7 @@ public class PrimaryController {
     private void switchToSecondary() throws IOException {
         DemoApp.setRoot("secondary");
     }
-    public boolean readFirebase()
+    public void readFirebase()
     {
         key = false;
 
@@ -91,17 +83,19 @@ public class PrimaryController {
         try
         {
             documents = future.get().getDocuments();
-            if(documents.size()>0)
+            if(!documents.isEmpty())
             {
-                System.out.println("Getting (reading) data from firabase database....");
+                System.out.println("Getting (reading) data from firebase database....");
                 listOfUsers.clear();
                 for (QueryDocumentSnapshot document : documents)
                 {
-                    outputTextArea.setText(outputTextArea.getText()+ document.getData().get("Name")+ " , Age: "+
-                            document.getData().get("Age")+ " \n ");
+                    outputTextArea.setText(outputTextArea.getText() + document.getData().get("Name") + " , Age: " +
+                            document.getData().get("Age") + " , Phone: " +
+                            document.getData().get("PhoneNum") + "\n");
                     System.out.println(document.getId() + " => " + document.getData().get("Name"));
-                    person  = new Person(String.valueOf(document.getData().get("Name")),
-                            Integer.parseInt(document.getData().get("Age").toString()));
+                    person = new Person(String.valueOf(document.getData().get("Name")),
+                            Integer.parseInt(document.getData().get("Age").toString()),
+                            String.valueOf(document.getData().get("PhoneNum")));
                     listOfUsers.add(person);
                 }
             }
@@ -116,33 +110,7 @@ public class PrimaryController {
         {
             ex.printStackTrace();
         }
-        return key;
     }
-
-    public boolean registerUser() {
-        UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                .setEmail("user222@example.com")
-                .setEmailVerified(false)
-                .setPassword("secretPassword")
-                .setPhoneNumber("+11234567890")
-                .setDisplayName("John Doe")
-                .setDisabled(false);
-
-        UserRecord userRecord;
-        try {
-            userRecord = DemoApp.fauth.createUser(request);
-            System.out.println("Successfully created new user with Firebase Uid: " + userRecord.getUid()
-            + " check Firebase > Authentication > Users tab");
-            return true;
-
-        } catch (FirebaseAuthException ex) {
-            // Logger.getLogger(FirestoreContext.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Error creating a new user in the firebase");
-            return false;
-        }
-
-    }
-
     public void addData() {
 
         DocumentReference docRef = DemoApp.fstore.collection("Persons").document(UUID.randomUUID().toString());
@@ -150,6 +118,7 @@ public class PrimaryController {
         Map<String, Object> data = new HashMap<>();
         data.put("Name", nameTextField.getText());
         data.put("Age", Integer.parseInt(ageTextField.getText()));
+        data.put("PhoneNum", phoneNumTextField.getText());
 
         //asynchronously write data
         ApiFuture<WriteResult> result = docRef.set(data);

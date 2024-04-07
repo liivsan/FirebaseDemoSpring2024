@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 
 import com.google.auth.oauth2.GoogleCredentials;
@@ -38,9 +39,23 @@ public class DemoApp extends Application {
         fstore = contxtFirebase.firebase();
         fauth = FirebaseAuth.getInstance();
 
-        scene = new Scene(loadFXML("primary"), 640, 480);
+        try (FileInputStream serviceAccount =
+                     new FileInputStream("src/main/resources/aydin/firebasedemospring2024/key.json")) {
+            FirebaseOptions options = new FirebaseOptions.Builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .build();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+       // FirebaseApp.initializeApp(options);
+
+        scene = new Scene(loadFXML("welcome"), 640, 480);
         stage.setScene(scene);
         stage.show();
+    }
+
+    public static void switchToDataAccessView() throws IOException {
+        scene.setRoot(loadFXML("primary"));
     }
 
     static void setRoot(String fxml) throws IOException {
